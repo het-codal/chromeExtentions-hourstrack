@@ -9,8 +9,11 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
   if (tabUrl === "https://hr.codal.com/attendance") {
     document.getElementById("getHours").addEventListener("click", () => {
       console.log("Popup DOM fully loaded and parsed");
-
-      function modifyDOM() {
+      const totalHours = document.getElementById("seletedHourValue").value;
+      const totalMinutes = document.getElementById(
+        "selectedMinutesValue"
+      ).value;
+      function modifyDOM(seletedHour = 8, selectedMinutes = 00) {
         //You can play with your DOM here or check URL against your regex
         const takeChildLen =
           document.body.getElementsByClassName("titem ti-atte tooltip").length -
@@ -38,28 +41,50 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         }
         let currentDate = new Date();
         currentDate = currentDate.getDate();
-        let an = divData.getElementsByTagName("span");
         const row = document.getElementsByClassName("titem-row")[currentDate];
         const atte = row.getElementsByClassName("ti-atte")[0];
-        const totalHours = 8; //convert to seconds
         const ps = atte.getElementsByTagName("p");
+        const pArray = [].slice.call(ps);
+        const lastEntry = pArray[pArray.length - 1];
+        const spans = lastEntry.getElementsByTagName("span");
         const actualWork = row
           .getElementsByClassName("ti-work")[0]
           .innerHTML.trim();
         const workHours = actualWork.split(":")[0];
         const workMin = actualWork.split(":")[1];
+        let wantToComplete = seletedHour * 3600 + selectedMinutes * 60;
         const totalWorkSecond = workHours * 3600 + workMin * 60;
-        const totalSecondsRequired = 8 * 3600 - totalWorkSecond;
-        const pArray = [].slice.call(ps);
-        const lastEntry = pArray[pArray.length - 1];
-        const spans = lastEntry.getElementsByTagName("span");
-        const end = spans[1].innerHTML?.trim();
+        const totalSecondsRequired = wantToComplete - totalWorkSecond;
         const start = spans[0].innerHTML?.trim();
         const startHourSeconds = start.split(" ")[0].split(":")[0] * 3600;
         const startMinSeconds = start.split(" ")[0].split(":")[1] * 60;
         const total = startHourSeconds + startMinSeconds + totalSecondsRequired;
         out = convertHMS(total);
-        return [out, abc];
+        const allEntry = [];
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1; // Months start at 0!
+        let dd = today.getDate();
+
+        if (dd < 10) dd = "0" + dd;
+        if (mm < 10) mm = "0" + mm;
+
+        const formattedToday = dd + "-" + mm + "-" + yyyy;
+        let trHtml =
+          "<tr class='title-tr'><td colspan='2'>" +
+          formattedToday +
+          "</td></tr><tr class='title-tr'><td>IN</td><td>OUT</td></tr>";
+        pArray?.forEach((ele) => {
+          const stag = ele.getElementsByTagName("span");
+          const end = stag[1].innerHTML?.replace("-", "").trim();
+          const start = stag[0].innerHTML?.replace("-", "")?.trim();
+          trHtml += `<tr><td>${start ? start : "-"}</td><td>${
+            end ? end : "-"
+          }</td></tr>`;
+        });
+
+        const table = `<table class="entry-table">${trHtml}</table>`;
+        return [out, abc, table];
       }
 
       //We have permission to access the activeTab, so we can call chrome.tabs.executeScript:
@@ -67,15 +92,23 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         {
           target: { tabId: tabId },
           func: modifyDOM,
+          args: [totalHours, totalMinutes],
         },
         (results) => {
           let textFieldElement = document.getElementById("textField");
+          textFieldElement.classList.remove("gredient-color-green");
+          textFieldElement.classList.remove("gredient-color-red");
+          textFieldElement.style.fontSize = "16px";
           if (results[0]["result"][1] >= 07) {
             textFieldElement.style.color = "red";
+            textFieldElement.classList.add("gredient-color-red");
           } else {
             textFieldElement.style.color = "green";
+            textFieldElement.classList.add("gredient-color-green");
           }
           textFieldElement.value = results[0]["result"][0];
+          document.getElementById("entry-table").innerHTML =
+            results[0]["result"][2];
         }
       );
     });
