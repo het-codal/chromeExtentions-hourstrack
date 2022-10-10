@@ -14,14 +14,6 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         "selectedMinutesValue"
       ).value;
       function modifyDOM(seletedHour = 8, selectedMinutes = 00) {
-        console.log(
-          "🚀 ~ file: popup.js ~ line 25 ~ functionmodifyDOM(seletedHour ~ selectedMinutes",
-          selectedMinutes
-        );
-        console.log(
-          "🚀 ~ file: popup.js ~ line 25 ~ functionmodifyDOM(seletedHour ~ seletedHour",
-          seletedHour
-        );
         //You can play with your DOM here or check URL against your regex
         const takeChildLen =
           document.body.getElementsByClassName("titem ti-atte tooltip").length -
