@@ -59,7 +59,6 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         const startMinSeconds = start.split(" ")[0].split(":")[1] * 60;
         const total = startHourSeconds + startMinSeconds + totalSecondsRequired;
         out = convertHMS(total);
-        console.log(total);
         return [out, abc];
       }
 
@@ -70,11 +69,6 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           func: modifyDOM,
         },
         (results) => {
-          console.log(
-            "🚀 ~ file: popup.js ~ line 90 ~ document.getElementById ~ results",
-            results
-          );
-
           let textFieldElement = document.getElementById("textField");
           if (results[0]["result"][1] >= 07) {
             textFieldElement.style.color = "red";
