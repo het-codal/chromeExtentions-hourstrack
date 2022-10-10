@@ -9,8 +9,11 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
   if (tabUrl === "https://hr.codal.com/attendance") {
     document.getElementById("getHours").addEventListener("click", () => {
       console.log("Popup DOM fully loaded and parsed");
-
-      function modifyDOM() {
+      const totalHours = document.getElementById("seletedHourValue").value;
+      const totalMinutes = document.getElementById(
+        "selectedMinutesValue"
+      ).value;
+      function modifyDOM(seletedHour = 8, selectedMinutes = 00) {
         //You can play with your DOM here or check URL against your regex
         const takeChildLen =
           document.body.getElementsByClassName("titem ti-atte tooltip").length -
@@ -38,22 +41,20 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         }
         let currentDate = new Date();
         currentDate = currentDate.getDate();
-        let an = divData.getElementsByTagName("span");
         const row = document.getElementsByClassName("titem-row")[currentDate];
         const atte = row.getElementsByClassName("ti-atte")[0];
-        const totalHours = 8; //convert to seconds
         const ps = atte.getElementsByTagName("p");
+        const pArray = [].slice.call(ps);
+        const lastEntry = pArray[pArray.length - 1];
+        const spans = lastEntry.getElementsByTagName("span");
         const actualWork = row
           .getElementsByClassName("ti-work")[0]
           .innerHTML.trim();
         const workHours = actualWork.split(":")[0];
         const workMin = actualWork.split(":")[1];
+        let wantToComplete = seletedHour * 3600 + selectedMinutes * 60;
         const totalWorkSecond = workHours * 3600 + workMin * 60;
-        const totalSecondsRequired = 8 * 3600 - totalWorkSecond;
-        const pArray = [].slice.call(ps);
-        const lastEntry = pArray[pArray.length - 1];
-        const spans = lastEntry.getElementsByTagName("span");
-        const end = spans[1].innerHTML?.trim();
+        const totalSecondsRequired = wantToComplete - totalWorkSecond;
         const start = spans[0].innerHTML?.trim();
         const startHourSeconds = start.split(" ")[0].split(":")[0] * 3600;
         const startMinSeconds = start.split(" ")[0].split(":")[1] * 60;
@@ -91,6 +92,7 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         {
           target: { tabId: tabId },
           func: modifyDOM,
+          args: [totalHours, totalMinutes],
         },
         (results) => {
           let textFieldElement = document.getElementById("textField");
