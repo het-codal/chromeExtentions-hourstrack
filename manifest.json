@@ -1,6 +1,6 @@
 {
     "manifest_version": 2,
-    "name": "Demo",
+    "name": "HR Hours Tracking",
     "version": "1.0",
     "description": "Calculate your working hours",
     "icons": {

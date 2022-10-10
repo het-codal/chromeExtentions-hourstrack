@@ -5,6 +5,7 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
   tabUrl = tab.url;
   console.log(tabUrl);
   let out = 0;
+  var abc = 0;
   if (tabUrl === "https://hr.codal.com/attendance") {
     document.getElementById("getHours").addEventListener("click", () => {
       console.log("Popup DOM fully loaded and parsed");
@@ -32,6 +33,8 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           if (seconds < 10) {
             seconds = "0" + seconds;
           }
+          abc = hours;
+          console.log("🚀 ~ file: popup.js ~ line 37 ~ convertHMS ~ abc", abc);
           return hours + ":" + minutes + ":" + seconds; // Return is HH : MM : SS
         }
         let currentDate = new Date();
@@ -57,7 +60,8 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         const startMinSeconds = start.split(" ")[0].split(":")[1] * 60;
         const total = startHourSeconds + startMinSeconds + totalSecondsRequired;
         out = convertHMS(total);
-        return out;
+        console.log(total);
+        return [out, abc];
       }
 
       //We have permission to access the activeTab, so we can call chrome.tabs.executeScript:
@@ -67,10 +71,13 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         },
         (results) => {
           //Here we have just the innerHTML and not DOM structure
-          console.log("Popup script:", results);
-          document.getElementById("textField").value = results[0];
-          // alert(results[0]);
-          console.log(results[0]);
+          let textFieldElement = document.getElementById("textField");
+          if (results[0][1] >= 07) {
+            textFieldElement.style.color = "red";
+          } else {
+            textFieldElement.style.color = "green";
+          }
+          textFieldElement.value = results[0][0];
         }
       );
     });
