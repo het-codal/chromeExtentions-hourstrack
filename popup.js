@@ -59,7 +59,31 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         const startMinSeconds = start.split(" ")[0].split(":")[1] * 60;
         const total = startHourSeconds + startMinSeconds + totalSecondsRequired;
         out = convertHMS(total);
-        return [out, abc];
+        const allEntry = [];
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1; // Months start at 0!
+        let dd = today.getDate();
+
+        if (dd < 10) dd = "0" + dd;
+        if (mm < 10) mm = "0" + mm;
+
+        const formattedToday = dd + "-" + mm + "-" + yyyy;
+        let trHtml =
+          "<tr class='title-tr'><td colspan='2'>" +
+          formattedToday +
+          "</td></tr><tr class='title-tr'><td>IN</td><td>OUT</td></tr>";
+        pArray?.forEach((ele) => {
+          const stag = ele.getElementsByTagName("span");
+          const end = stag[1].innerHTML?.replace("-", "").trim();
+          const start = stag[0].innerHTML?.replace("-", "")?.trim();
+          trHtml += `<tr><td>${start ? start : "-"}</td><td>${
+            end ? end : "-"
+          }</td></tr>`;
+        });
+
+        const table = `<table class="entry-table">${trHtml}</table>`;
+        return [out, abc, table];
       }
 
       //We have permission to access the activeTab, so we can call chrome.tabs.executeScript:
@@ -70,12 +94,19 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         },
         (results) => {
           let textFieldElement = document.getElementById("textField");
+          textFieldElement.classList.remove("gredient-color-green");
+          textFieldElement.classList.remove("gredient-color-red");
+          textFieldElement.style.fontSize = "16px";
           if (results[0]["result"][1] >= 07) {
             textFieldElement.style.color = "red";
+            textFieldElement.classList.add("gredient-color-red");
           } else {
             textFieldElement.style.color = "green";
+            textFieldElement.classList.add("gredient-color-green");
           }
           textFieldElement.value = results[0]["result"][0];
+          document.getElementById("entry-table").innerHTML =
+            results[0]["result"][2];
         }
       );
     });
