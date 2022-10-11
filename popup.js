@@ -4,7 +4,7 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
   var tab = tabs[0];
   tabUrl = tab.url;
   let youCanLeave = 0;
-  var finalLeaveHours = 0;
+  let finalLeaveHours = 0;
   const tabId = tab.id;
   if (tabUrl === "https://hr.codal.com/attendance") {
     document.getElementById("getHours").addEventListener("click", () => {
@@ -36,6 +36,7 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
             hour: +hours,
             minute: +minutes,
           };
+          finalLeaveHours = +hours;
           return response;
         }
         let currentDate = new Date();
@@ -100,36 +101,43 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           args: [totalHours, totalMinutes],
         },
         (results) => {
+          console.log(
+            "🚀 ~ file: popup.js ~ line 104 ~ document.getElementById ~ results",
+            results
+          );
           let resultDetails = results[0]["result"];
-          let leaveTimeResult = resultDetails["leaveTime"];
-          let currentDate = new Date();
-          let currentHour = currentDate.getHours();
-          // currentHour === 12 && (currentHour = 0);
-          let currentMinute = currentDate.getMinutes();
-          if (
-            currentHour > leaveTimeResult["hour"] ||
-            (currentHour > leaveTimeResult["hour"] &&
-              currentMinute > leaveTimeResult["minute"])
-          ) {
-            document.getElementById("hurryTag").style.display = "block";
-          }
-          if (leaveTimeResult["hour"] > 12) {
-            leaveTimeResult["hour"] = leaveTimeResult["hour"] - 12;
-            leaveTimeResult["format"] = " PM";
-          } else {
-            leaveTimeResult["format"] = " AM";
-          }
           if (resultDetails == "DAY_OFF") {
             let textFieldElement = document.getElementById("textField");
             textFieldElement.value = "DAY OFF";
             document.getElementById("h2-title").remove();
           } else {
+            let leaveTimeResult = resultDetails["leaveTime"];
+            let currentDate = new Date();
+            let currentHour = currentDate.getHours();
+            let currentMinute = currentDate.getMinutes();
+            if (
+              currentHour > leaveTimeResult["hour"] ||
+              (currentHour > leaveTimeResult["hour"] &&
+                currentMinute > leaveTimeResult["minute"])
+            ) {
+              document.getElementById("hurryTag").style.display = "block";
+            }
+            if (leaveTimeResult["hour"] > 12) {
+              leaveTimeResult["hour"] = leaveTimeResult["hour"] - 12;
+              resultDetails["leaveHour"] = resultDetails["leaveHour"] - 12;
+              leaveTimeResult["format"] = " PM";
+            } else {
+              leaveTimeResult["format"] = " AM";
+            }
             document.getElementById("h2-title").style.display = "block";
             let textFieldElement = document.getElementById("textField");
             textFieldElement.classList.remove("gredient-color-green");
             textFieldElement.classList.remove("gredient-color-red");
             textFieldElement.style.fontSize = "16px";
-            if (resultDetails["leaveHour"] >= 07) {
+            if (
+              resultDetails["leaveHour"] >= 07 &&
+              leaveTimeResult["format"] === " PM"
+            ) {
               textFieldElement.classList.add("gredient-color-red");
             } else {
               textFieldElement.classList.add("gredient-color-green");
