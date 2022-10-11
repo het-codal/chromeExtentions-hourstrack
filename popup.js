@@ -3,8 +3,8 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
   // tab = tab.id;
   var tab = tabs[0];
   tabUrl = tab.url;
-  let out = 0;
-  var abc = 0;
+  let youCanLeave = 0;
+  var finalLeaveHours = 0;
   const tabId = tab.id;
   if (tabUrl === "https://hr.codal.com/attendance") {
     document.getElementById("getHours").addEventListener("click", () => {
@@ -25,19 +25,22 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           const sec = parseInt(value, 10); // convert value to number if it's string
           let hours = Math.floor(sec / 3600); // get hours
           let minutes = Math.floor((sec - hours * 3600) / 60); // get minutes
-          let seconds = sec - hours * 3600 - minutes * 60; //  get seconds
           // add 0 if value < 10; Example: 2 => 02
+          if (hours > 12) {
+            hours = hours - 12;
+            finalLeaveHours = hours;
+          }
           if (hours < 10) {
             hours = "0" + hours;
           }
           if (minutes < 10) {
             minutes = "0" + minutes;
           }
-          if (seconds < 10) {
-            seconds = "0" + seconds;
+          if (hours > 12) {
+            return hours + ":" + minutes + " AM";
+          } else {
+            return hours + ":" + minutes + " PM";
           }
-          abc = hours;
-          return hours + ":" + minutes + ":" + seconds; // Return is HH : MM : SS
         }
         let currentDate = new Date();
         currentDate = currentDate.getDate();
@@ -62,8 +65,7 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         const startHourSeconds = start.split(" ")[0].split(":")[0] * 3600;
         const startMinSeconds = start.split(" ")[0].split(":")[1] * 60;
         const total = startHourSeconds + startMinSeconds + totalSecondsRequired;
-        out = convertHMS(total);
-        const allEntry = [];
+        youCanLeave = convertHMS(total);
         const today = new Date();
         const yyyy = today.getFullYear();
         let mm = today.getMonth() + 1; // Months start at 0!
@@ -87,7 +89,11 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         });
         trHtml += "</tbody>";
         const table = `<table class="entry-table">${trHtml}</table>`;
-        return [out, abc, table];
+        return {
+          leaveTime: youCanLeave,
+          leaveHour: finalLeaveHours,
+          table: table,
+        };
       }
 
       //We have permission to access the activeTab, so we can call chrome.tabs.executeScript:
@@ -98,7 +104,8 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           args: [totalHours, totalMinutes],
         },
         (results) => {
-          if (results[0]["result"] == "DAY_OFF") {
+          let resultDetails = results[0]["result"];
+          if (resultDetails == "DAY_OFF") {
             let textFieldElement = document.getElementById("textField");
             textFieldElement.value = "DAY OFF";
             document.getElementById("h2-title").remove();
@@ -108,14 +115,14 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
             textFieldElement.classList.remove("gredient-color-green");
             textFieldElement.classList.remove("gredient-color-red");
             textFieldElement.style.fontSize = "16px";
-            if (results[0]["result"][1] >= 07) {
+            if (resultDetails["leaveHour"] >= 07) {
               textFieldElement.classList.add("gredient-color-red");
             } else {
               textFieldElement.classList.add("gredient-color-green");
             }
-            textFieldElement.value = results[0]["result"][0];
+            textFieldElement.value = resultDetails["leaveTime"];
             document.getElementById("entry-table").innerHTML =
-              results[0]["result"][2];
+              resultDetails["table"];
           }
         }
       );
