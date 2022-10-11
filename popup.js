@@ -3,11 +3,12 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
   // tab = tab.id;
   var tab = tabs[0];
   tabUrl = tab.url;
-  let out = 0;
-  var abc = 0;
+  let youCanLeave = 0;
+  var finalLeaveHours = 0;
   const tabId = tab.id;
   if (tabUrl === "https://hr.codal.com/attendance") {
     document.getElementById("getHours").addEventListener("click", () => {
+      document.getElementById("hurryTag").style.display = "none";
       console.log("Popup DOM fully loaded and parsed");
       const totalHours = document.getElementById("seletedHourValue").value;
       const totalMinutes = document.getElementById(
@@ -25,23 +26,24 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           const sec = parseInt(value, 10); // convert value to number if it's string
           let hours = Math.floor(sec / 3600); // get hours
           let minutes = Math.floor((sec - hours * 3600) / 60); // get minutes
-          let seconds = sec - hours * 3600 - minutes * 60; //  get seconds
-          // add 0 if value < 10; Example: 2 => 02
           if (hours < 10) {
             hours = "0" + hours;
           }
           if (minutes < 10) {
             minutes = "0" + minutes;
           }
-          if (seconds < 10) {
-            seconds = "0" + seconds;
-          }
-          abc = hours;
-          return hours + ":" + minutes + ":" + seconds; // Return is HH : MM : SS
+          let response = {
+            hour: +hours,
+            minute: +minutes,
+          };
+          return response;
         }
         let currentDate = new Date();
         currentDate = currentDate.getDate();
         const row = document.getElementsByClassName("titem-row")[currentDate];
+        if (row.classList.contains("day-off")) {
+          return "DAY_OFF";
+        }
         const atte = row.getElementsByClassName("ti-atte")[0];
         const ps = atte.getElementsByTagName("p");
         const pArray = [].slice.call(ps);
@@ -59,8 +61,7 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         const startHourSeconds = start.split(" ")[0].split(":")[0] * 3600;
         const startMinSeconds = start.split(" ")[0].split(":")[1] * 60;
         const total = startHourSeconds + startMinSeconds + totalSecondsRequired;
-        out = convertHMS(total);
-        const allEntry = [];
+        youCanLeave = convertHMS(total);
         const today = new Date();
         const yyyy = today.getFullYear();
         let mm = today.getMonth() + 1; // Months start at 0!
@@ -71,9 +72,9 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
 
         const formattedToday = dd + "-" + mm + "-" + yyyy;
         let trHtml =
-          "<tr class='title-tr'><td colspan='2'>" +
+          "<thead><tr class='title-tr'><td colspan='2'>" +
           formattedToday +
-          "</td></tr><tr class='title-tr'><td>IN</td><td>OUT</td></tr>";
+          "</td></tr></thead><tbody><tr class='title-tr'><td>IN</td><td>OUT</td></tr>";
         pArray?.forEach((ele) => {
           const stag = ele.getElementsByTagName("span");
           const end = stag[1].innerHTML?.replace("-", "").trim();
@@ -82,9 +83,13 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
             end ? end : "-"
           }</td></tr>`;
         });
-
+        trHtml += "</tbody>";
         const table = `<table class="entry-table">${trHtml}</table>`;
-        return [out, abc, table];
+        return {
+          leaveTime: youCanLeave,
+          leaveHour: finalLeaveHours,
+          table: table,
+        };
       }
 
       //We have permission to access the activeTab, so we can call chrome.tabs.executeScript:
@@ -95,20 +100,48 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           args: [totalHours, totalMinutes],
         },
         (results) => {
-          let textFieldElement = document.getElementById("textField");
-          textFieldElement.classList.remove("gredient-color-green");
-          textFieldElement.classList.remove("gredient-color-red");
-          textFieldElement.style.fontSize = "16px";
-          if (results[0]["result"][1] >= 07) {
-            textFieldElement.style.color = "red";
-            textFieldElement.classList.add("gredient-color-red");
-          } else {
-            textFieldElement.style.color = "green";
-            textFieldElement.classList.add("gredient-color-green");
+          let resultDetails = results[0]["result"];
+          let leaveTimeResult = resultDetails["leaveTime"];
+          let currentDate = new Date();
+          let currentHour = currentDate.getHours();
+          // currentHour === 12 && (currentHour = 0);
+          let currentMinute = currentDate.getMinutes();
+          if (
+            currentHour > leaveTimeResult["hour"] ||
+            (currentHour > leaveTimeResult["hour"] &&
+              currentMinute > leaveTimeResult["minute"])
+          ) {
+            document.getElementById("hurryTag").style.display = "block";
           }
-          textFieldElement.value = results[0]["result"][0];
-          document.getElementById("entry-table").innerHTML =
-            results[0]["result"][2];
+          if (leaveTimeResult["hour"] > 12) {
+            leaveTimeResult["hour"] = leaveTimeResult["hour"] - 12;
+            leaveTimeResult["format"] = " PM";
+          } else {
+            leaveTimeResult["format"] = " AM";
+          }
+          if (resultDetails == "DAY_OFF") {
+            let textFieldElement = document.getElementById("textField");
+            textFieldElement.value = "DAY OFF";
+            document.getElementById("h2-title").remove();
+          } else {
+            document.getElementById("h2-title").style.display = "block";
+            let textFieldElement = document.getElementById("textField");
+            textFieldElement.classList.remove("gredient-color-green");
+            textFieldElement.classList.remove("gredient-color-red");
+            textFieldElement.style.fontSize = "16px";
+            if (resultDetails["leaveHour"] >= 07) {
+              textFieldElement.classList.add("gredient-color-red");
+            } else {
+              textFieldElement.classList.add("gredient-color-green");
+            }
+            textFieldElement.value =
+              leaveTimeResult["hour"] +
+              ":" +
+              leaveTimeResult["minute"] +
+              leaveTimeResult["format"];
+            document.getElementById("entry-table").innerHTML =
+              resultDetails["table"];
+          }
         }
       );
     });
