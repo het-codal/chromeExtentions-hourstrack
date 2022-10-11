@@ -9,8 +9,9 @@
 
   <body>
     <div class="container">
-      <h2>You can leave at</h2>
-      <div class="custom-select" style="width: 200px">
+      <h1 class="page-title">Hours Tracker</h1>
+      <h2>Total Hours</h2>
+      <div class="custom-select" style="width: 100%">
         <label>Hours : </label>
         <select id="seletedHourValue">
           <option value="1">1</option>
@@ -44,7 +45,7 @@
         </select>
       </div>
       <div id="entry-table"></div>
-      <h2>You can leave at</h2>
+      <h2 id="h2-title" style="display: none">You can leave at</h2>
       <br />
       <input
         type="text"
@@ -54,7 +55,7 @@
         readonly
       />
       <br />
-      <button id="getHours" class="button">Get Hours</button>
+      <button id="getHours" class="button">Calculate Hours</button>
     </div>
     <script src="popup.js"></script>
   </body>

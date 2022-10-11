@@ -22,10 +22,6 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           "titem ti-atte tooltip"
         )[takeChildLen];
         function convertHMS(value) {
-          console.log(
-            "🚀 ~ file: popup.js ~ line 25 ~ convertHMS ~ value",
-            value
-          );
           const sec = parseInt(value, 10); // convert value to number if it's string
           let hours = Math.floor(sec / 3600); // get hours
           let minutes = Math.floor((sec - hours * 3600) / 60); // get minutes
@@ -49,6 +45,9 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         let currentDate = new Date();
         currentDate = currentDate.getDate();
         const row = document.getElementsByClassName("titem-row")[currentDate];
+        if (row.classList.contains("day-off")) {
+          return "DAY_OFF";
+        }
         const atte = row.getElementsByClassName("ti-atte")[0];
         const ps = atte.getElementsByTagName("p");
         const pArray = [].slice.call(ps);
@@ -77,9 +76,9 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
 
         const formattedToday = dd + "-" + mm + "-" + yyyy;
         let trHtml =
-          "<tr class='title-tr'><td colspan='2'>" +
+          "<thead><tr class='title-tr'><td colspan='2'>" +
           formattedToday +
-          "</td></tr><tr class='title-tr'><td>IN</td><td>OUT</td></tr>";
+          "</td></tr></thead><tbody><tr class='title-tr'><td>IN</td><td>OUT</td></tr>";
         pArray?.forEach((ele) => {
           const stag = ele.getElementsByTagName("span");
           const end = stag[1].innerHTML?.replace("-", "").trim();
@@ -88,7 +87,7 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
             end ? end : "-"
           }</td></tr>`;
         });
-
+        trHtml += "</tbody>";
         const table = `<table class="entry-table">${trHtml}</table>`;
         return {
           leaveTime: youCanLeave,
@@ -106,20 +105,25 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         },
         (results) => {
           let resultDetails = results[0]["result"];
-          let textFieldElement = document.getElementById("textField");
-          textFieldElement.classList.remove("gredient-color-green");
-          textFieldElement.classList.remove("gredient-color-red");
-          textFieldElement.style.fontSize = "16px";
-          if (resultDetails["leaveHour"] >= 07) {
-            textFieldElement.style.color = "red";
-            textFieldElement.classList.add("gredient-color-red");
+          if (resultDetails == "DAY_OFF") {
+            let textFieldElement = document.getElementById("textField");
+            textFieldElement.value = "DAY OFF";
+            document.getElementById("h2-title").remove();
           } else {
-            textFieldElement.style.color = "green";
-            textFieldElement.classList.add("gredient-color-green");
+            document.getElementById("h2-title").style.display = "block";
+            let textFieldElement = document.getElementById("textField");
+            textFieldElement.classList.remove("gredient-color-green");
+            textFieldElement.classList.remove("gredient-color-red");
+            textFieldElement.style.fontSize = "16px";
+            if (resultDetails["leaveHour"] >= 07) {
+              textFieldElement.classList.add("gredient-color-red");
+            } else {
+              textFieldElement.classList.add("gredient-color-green");
+            }
+            textFieldElement.value = resultDetails["leaveTime"];
+            document.getElementById("entry-table").innerHTML =
+              resultDetails["table"];
           }
-          textFieldElement.value = resultDetails["leaveTime"];
-          document.getElementById("entry-table").innerHTML =
-            resultDetails["table"];
         }
       );
     });
