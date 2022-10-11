@@ -42,6 +42,9 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         let currentDate = new Date();
         currentDate = currentDate.getDate();
         const row = document.getElementsByClassName("titem-row")[currentDate];
+        if (row.classList.contains("day-off")) {
+          return "DAY_OFF";
+        }
         const atte = row.getElementsByClassName("ti-atte")[0];
         const ps = atte.getElementsByTagName("p");
         const pArray = [].slice.call(ps);
@@ -71,9 +74,9 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
 
         const formattedToday = dd + "-" + mm + "-" + yyyy;
         let trHtml =
-          "<tr class='title-tr'><td colspan='2'>" +
+          "<thead><tr class='title-tr'><td colspan='2'>" +
           formattedToday +
-          "</td></tr><tr class='title-tr'><td>IN</td><td>OUT</td></tr>";
+          "</td></tr></thead><tbody><tr class='title-tr'><td>IN</td><td>OUT</td></tr>";
         pArray?.forEach((ele) => {
           const stag = ele.getElementsByTagName("span");
           const end = stag[1].innerHTML?.replace("-", "").trim();
@@ -82,7 +85,7 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
             end ? end : "-"
           }</td></tr>`;
         });
-
+        trHtml += "</tbody>";
         const table = `<table class="entry-table">${trHtml}</table>`;
         return [out, abc, table];
       }
@@ -95,20 +98,25 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           args: [totalHours, totalMinutes],
         },
         (results) => {
-          let textFieldElement = document.getElementById("textField");
-          textFieldElement.classList.remove("gredient-color-green");
-          textFieldElement.classList.remove("gredient-color-red");
-          textFieldElement.style.fontSize = "16px";
-          if (results[0]["result"][1] >= 07) {
-            textFieldElement.style.color = "red";
-            textFieldElement.classList.add("gredient-color-red");
+          if (results[0]["result"] == "DAY_OFF") {
+            let textFieldElement = document.getElementById("textField");
+            textFieldElement.value = "DAY OFF";
+            document.getElementById("h2-title").remove();
           } else {
-            textFieldElement.style.color = "green";
-            textFieldElement.classList.add("gredient-color-green");
+            document.getElementById("h2-title").style.display = "block";
+            let textFieldElement = document.getElementById("textField");
+            textFieldElement.classList.remove("gredient-color-green");
+            textFieldElement.classList.remove("gredient-color-red");
+            textFieldElement.style.fontSize = "16px";
+            if (results[0]["result"][1] >= 07) {
+              textFieldElement.classList.add("gredient-color-red");
+            } else {
+              textFieldElement.classList.add("gredient-color-green");
+            }
+            textFieldElement.value = results[0]["result"][0];
+            document.getElementById("entry-table").innerHTML =
+              results[0]["result"][2];
           }
-          textFieldElement.value = results[0]["result"][0];
-          document.getElementById("entry-table").innerHTML =
-            results[0]["result"][2];
         }
       );
     });
