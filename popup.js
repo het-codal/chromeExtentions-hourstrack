@@ -143,6 +143,12 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
             } else {
               textFieldElement.classList.add("gredient-color-green");
             }
+            if (leaveTimeResult["hour"] < 10) {
+              leaveTimeResult["hour"] = "0" + leaveTimeResult["hour"];
+            }
+            if (leaveTimeResult["minute"] < 10) {
+              leaveTimeResult["minute"] = "0" + leaveTimeResult["hour"];
+            }
             textFieldElement.value =
               leaveTimeResult["hour"] +
               ":" +
