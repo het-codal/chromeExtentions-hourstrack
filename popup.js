@@ -4,10 +4,11 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
   var tab = tabs[0];
   tabUrl = tab.url;
   let youCanLeave = 0;
-  var finalLeaveHours = 0;
+  let finalLeaveHours = 0;
   const tabId = tab.id;
   if (tabUrl === "https://hr.codal.com/attendance") {
     document.getElementById("getHours").addEventListener("click", () => {
+      document.getElementById("hurryTag").style.display = "none";
       console.log("Popup DOM fully loaded and parsed");
       const totalHours = document.getElementById("seletedHourValue").value;
       const totalMinutes = document.getElementById(
@@ -25,22 +26,18 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           const sec = parseInt(value, 10); // convert value to number if it's string
           let hours = Math.floor(sec / 3600); // get hours
           let minutes = Math.floor((sec - hours * 3600) / 60); // get minutes
-          // add 0 if value < 10; Example: 2 => 02
-          if (hours > 12) {
-            hours = hours - 12;
-            finalLeaveHours = hours;
-          }
           if (hours < 10) {
             hours = "0" + hours;
           }
           if (minutes < 10) {
             minutes = "0" + minutes;
           }
-          if (hours > 12) {
-            return hours + ":" + minutes + " AM";
-          } else {
-            return hours + ":" + minutes + " PM";
-          }
+          let response = {
+            hour: +hours,
+            minute: +minutes,
+          };
+          finalLeaveHours = +hours;
+          return response;
         }
         let currentDate = new Date();
         currentDate = currentDate.getDate();
@@ -104,23 +101,53 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           args: [totalHours, totalMinutes],
         },
         (results) => {
+          console.log(
+            "🚀 ~ file: popup.js ~ line 104 ~ document.getElementById ~ results",
+            results
+          );
           let resultDetails = results[0]["result"];
           if (resultDetails == "DAY_OFF") {
             let textFieldElement = document.getElementById("textField");
             textFieldElement.value = "DAY OFF";
             document.getElementById("h2-title").remove();
           } else {
+            let leaveTimeResult = resultDetails["leaveTime"];
+            let currentDate = new Date();
+            let currentHour = currentDate.getHours();
+            let currentMinute = currentDate.getMinutes();
+            if (
+              currentHour > leaveTimeResult["hour"] ||
+              (currentHour >= leaveTimeResult["hour"] &&
+                currentMinute >= leaveTimeResult["minute"])
+            ) {
+              document.getElementById("hurryTag").style.display = "block";
+            }
+            if (leaveTimeResult["hour"] >= 12) {
+              leaveTimeResult["hour"] = leaveTimeResult["hour"] - 12;
+              leaveTimeResult["hour"] === 0 && (leaveTimeResult["hour"] = 12);
+              resultDetails["leaveHour"] = resultDetails["leaveHour"] - 12;
+              leaveTimeResult["format"] = " PM";
+            } else {
+              leaveTimeResult["format"] = " AM";
+            }
             document.getElementById("h2-title").style.display = "block";
             let textFieldElement = document.getElementById("textField");
             textFieldElement.classList.remove("gredient-color-green");
             textFieldElement.classList.remove("gredient-color-red");
             textFieldElement.style.fontSize = "16px";
-            if (resultDetails["leaveHour"] >= 07) {
+            if (
+              resultDetails["leaveHour"] >= 07 &&
+              leaveTimeResult["format"] === " PM"
+            ) {
               textFieldElement.classList.add("gredient-color-red");
             } else {
               textFieldElement.classList.add("gredient-color-green");
             }
-            textFieldElement.value = resultDetails["leaveTime"];
+            textFieldElement.value =
+              leaveTimeResult["hour"] +
+              ":" +
+              leaveTimeResult["minute"] +
+              leaveTimeResult["format"];
             document.getElementById("entry-table").innerHTML =
               resultDetails["table"];
           }

@@ -146,3 +146,7 @@ footer>p {
     background-position: 200% center;
   }
 }
+
+.hours:focus {
+  outline: none;
+}
