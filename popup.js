@@ -147,7 +147,7 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
               leaveTimeResult["hour"] = "0" + leaveTimeResult["hour"];
             }
             if (leaveTimeResult["minute"] < 10) {
-              leaveTimeResult["minute"] = "0" + leaveTimeResult["hour"];
+              leaveTimeResult["minute"] = "0" + leaveTimeResult["minute"];
             }
             textFieldElement.value =
               leaveTimeResult["hour"] +
