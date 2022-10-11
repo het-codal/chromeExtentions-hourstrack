@@ -103,11 +103,15 @@ select {
   margin-top: 20px;
 }
 
-.title-tr>td {
+.title-tr > td {
   padding: 0px 0px 10px 0px;
   width: 50%;
 }
 
 .page-title {
   margin-bottom: 10px;
+}
+
+.hours:focus {
+  outline: none;
 }
