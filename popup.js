@@ -55,6 +55,12 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           .innerHTML.trim();
         const workHours = actualWork.split(":")[0];
         const workMin = actualWork.split(":")[1];
+        if (
+          +workHours > +seletedHour ||
+          (+workHours >= +seletedHour && +workMin >= +selectedMinutes)
+        ) {
+          return "HOURS_COMPLETED";
+        }
         let wantToComplete = seletedHour * 3600 + selectedMinutes * 60;
         const totalWorkSecond = workHours * 3600 + workMin * 60;
         const totalSecondsRequired = wantToComplete - totalWorkSecond;
@@ -101,19 +107,20 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           args: [totalHours, totalMinutes],
         },
         (results) => {
-          console.log(
-            "🚀 ~ file: popup.js ~ line 104 ~ document.getElementById ~ results",
-            results
-          );
           let resultDetails = results[0]["result"];
           if (resultDetails == "DAY_OFF") {
             let textFieldElement = document.getElementById("textField");
             textFieldElement.value = "DAY OFF";
             document.getElementById("h2-title").remove();
+          } else if (resultDetails == "HOURS_COMPLETED") {
+            let textFieldElement = document.getElementById("textField");
+            textFieldElement.value = "Your hours already completed.";
+            document.getElementById("h2-title").remove();
           } else {
             let leaveTimeResult = resultDetails["leaveTime"];
             let currentDate = new Date();
             let currentHour = currentDate.getHours();
+            currentHour > 12 && (currentHour = currentHour - 12);
             let currentMinute = currentDate.getMinutes();
             if (
               currentHour > leaveTimeResult["hour"] ||
@@ -126,19 +133,13 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
               leaveTimeResult["hour"] = leaveTimeResult["hour"] - 12;
               leaveTimeResult["hour"] === 0 && (leaveTimeResult["hour"] = 12);
               resultDetails["leaveHour"] = resultDetails["leaveHour"] - 12;
-              leaveTimeResult["format"] = " PM";
-            } else {
-              leaveTimeResult["format"] = " AM";
             }
             document.getElementById("h2-title").style.display = "block";
             let textFieldElement = document.getElementById("textField");
             textFieldElement.classList.remove("gredient-color-green");
             textFieldElement.classList.remove("gredient-color-red");
             textFieldElement.style.fontSize = "16px";
-            if (
-              resultDetails["leaveHour"] >= 07 &&
-              leaveTimeResult["format"] === " PM"
-            ) {
+            if (resultDetails["leaveHour"] >= 07) {
               textFieldElement.classList.add("gredient-color-red");
             } else {
               textFieldElement.classList.add("gredient-color-green");
@@ -150,10 +151,7 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
               leaveTimeResult["minute"] = "0" + leaveTimeResult["minute"];
             }
             textFieldElement.value =
-              leaveTimeResult["hour"] +
-              ":" +
-              leaveTimeResult["minute"] +
-              leaveTimeResult["format"];
+              leaveTimeResult["hour"] + ":" + leaveTimeResult["minute"];
             document.getElementById("entry-table").innerHTML =
               resultDetails["table"];
           }
