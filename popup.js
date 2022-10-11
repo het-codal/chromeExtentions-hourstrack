@@ -117,13 +117,14 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
             let currentMinute = currentDate.getMinutes();
             if (
               currentHour > leaveTimeResult["hour"] ||
-              (currentHour > leaveTimeResult["hour"] &&
-                currentMinute > leaveTimeResult["minute"])
+              (currentHour >= leaveTimeResult["hour"] &&
+                currentMinute >= leaveTimeResult["minute"])
             ) {
               document.getElementById("hurryTag").style.display = "block";
             }
-            if (leaveTimeResult["hour"] > 12) {
+            if (leaveTimeResult["hour"] >= 12) {
               leaveTimeResult["hour"] = leaveTimeResult["hour"] - 12;
+              leaveTimeResult["hour"] === 0 && (leaveTimeResult["hour"] = 12);
               resultDetails["leaveHour"] = resultDetails["leaveHour"] - 12;
               leaveTimeResult["format"] = " PM";
             } else {
