@@ -49,7 +49,10 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         const ps = atte.getElementsByTagName("p");
         const pArray = [].slice.call(ps);
         const lastEntry = pArray[pArray.length - 1];
-        const spans = lastEntry.getElementsByTagName("span");
+        const spans = lastEntry?.getElementsByTagName("span");
+        if (spans === undefined) {
+          return "Empty";
+        }
         const actualWork = row
           .getElementsByClassName("ti-work")[0]
           .innerHTML.trim();
@@ -115,6 +118,11 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           } else if (resultDetails == "HOURS_COMPLETED") {
             let textFieldElement = document.getElementById("textField");
             textFieldElement.value = "Your hours already completed.";
+            document.getElementById("h2-title").remove();
+          } else if (resultDetails == "Empty") {
+            let textFieldElement = document.getElementById("textField");
+            textFieldElement.value = "present not marked for today.";
+            textFieldElement.style.color = "red";
             document.getElementById("h2-title").remove();
           } else {
             let leaveTimeResult = resultDetails["leaveTime"];
