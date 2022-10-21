@@ -42,6 +42,17 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         let currentDate = new Date();
         currentDate = currentDate.getDate();
         const row = document.getElementsByClassName("titem-row")[currentDate];
+
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1; // Months start at 0!
+        let dd = today.getDate();
+
+        if (dd < 10) dd = "0" + dd;
+        if (mm < 10) mm = "0" + mm;
+
+        const formattedToday = dd + "-" + mm + "-" + yyyy;
+
         if (row.classList.contains("day-off")) {
           return "DAY_OFF";
         }
@@ -51,7 +62,10 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         const lastEntry = pArray[pArray.length - 1];
         const spans = lastEntry?.getElementsByTagName("span");
         if (spans === undefined) {
-          return "Empty";
+          return {
+            status: "Empty",
+            formattedToday: formattedToday,
+          };
         }
         const actualWork = row
           .getElementsByClassName("ti-work")[0]
@@ -72,15 +86,7 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         const startMinSeconds = start.split(" ")[0].split(":")[1] * 60;
         const total = startHourSeconds + startMinSeconds + totalSecondsRequired;
         youCanLeave = convertHMS(total);
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        let mm = today.getMonth() + 1; // Months start at 0!
-        let dd = today.getDate();
 
-        if (dd < 10) dd = "0" + dd;
-        if (mm < 10) mm = "0" + mm;
-
-        const formattedToday = dd + "-" + mm + "-" + yyyy;
         let trHtml =
           "<thead><tr class='title-tr'><td colspan='2'>" +
           formattedToday +
@@ -110,6 +116,8 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           args: [totalHours, totalMinutes],
         },
         (results) => {
+          let dateOfDay = document.getElementById("dateOfDay");
+          dateOfDay.style.display = "none";
           let resultDetails = results[0]["result"];
           if (resultDetails == "DAY_OFF") {
             let textFieldElement = document.getElementById("textField");
@@ -119,10 +127,12 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
             let textFieldElement = document.getElementById("textField");
             textFieldElement.value = "Your hours already completed.";
             document.getElementById("h2-title").remove();
-          } else if (resultDetails == "Empty") {
+          } else if (resultDetails["status"] == "Empty") {
+            dateOfDay.innerHTML = resultDetails["formattedToday"];
             let textFieldElement = document.getElementById("textField");
             textFieldElement.value = "present not marked for today.";
             textFieldElement.style.color = "red";
+            dateOfDay.style.display = "block";
             document.getElementById("h2-title").remove();
           } else {
             let leaveTimeResult = resultDetails["leaveTime"];
