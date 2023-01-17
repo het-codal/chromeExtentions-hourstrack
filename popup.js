@@ -88,7 +88,15 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         const startHourSeconds = start.split(" ")[0].split(":")[0] * 3600;
         const startMinSeconds = start.split(" ")[0].split(":")[1] * 60;
         const total = startHourSeconds + startMinSeconds + totalSecondsRequired;
-        const remainingHour = convertHMS(totalSecondsRequired);
+        let k =
+          today.getHours() > 12
+            ? (today.getHours() - 12) * 3600
+            : today.getHours() * 3600;
+        k = k + today.getMinutes() * 60;
+        const l = startHourSeconds + startMinSeconds;
+        const rh = wantToComplete - totalWorkSecond - (k - l);
+        // Formula 8(totalHours need to complete)  - total work done - (current time - last in time)
+        const remainingHour = convertHMS(rh);
         youCanLeave = convertHMS(total);
         let trHtml =
           "<thead><tr class='title-tr'><td colspan='2'>" +
@@ -139,7 +147,6 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
             dateOfDay.style.display = "block";
             document.getElementById("h2-title").remove();
           } else if (resultDetails?.status == "MISS_PUNCH") {
-            console.log("Hello");
             document.getElementById("h2-title").remove();
             document.getElementById("textField").remove();
             document.getElementById("miss_punch_div").style.display = "block";
