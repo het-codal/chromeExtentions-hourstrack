@@ -85,8 +85,8 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         const startHourSeconds = start.split(" ")[0].split(":")[0] * 3600;
         const startMinSeconds = start.split(" ")[0].split(":")[1] * 60;
         const total = startHourSeconds + startMinSeconds + totalSecondsRequired;
+        const remainingHour = convertHMS(totalSecondsRequired);
         youCanLeave = convertHMS(total);
-
         let trHtml =
           "<thead><tr class='title-tr'><td colspan='2'>" +
           formattedToday +
@@ -105,6 +105,7 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           leaveTime: youCanLeave,
           leaveHour: finalLeaveHours,
           table: table,
+          remainingHour: remainingHour,
         };
       }
 
@@ -136,13 +137,38 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
             document.getElementById("h2-title").remove();
           } else {
             let leaveTimeResult = resultDetails["leaveTime"];
+            let remainingHour = resultDetails["remainingHour"];
             let currentDate = new Date();
             let currentHour = currentDate.getHours();
             currentHour > 12 && (currentHour = currentHour - 12);
             let currentMinute = currentDate.getMinutes();
+            let checkHour = leaveTimeResult["hour"]
+              ? leaveTimeResult["hour"]
+              : 0;
+            if (remainingHour) {
+              let textFieldElement =
+                document.getElementById("textFieldRemaining");
+              if (remainingHour["hour"] < 10) {
+                remainingHour["hour"] = "0" + remainingHour["hour"];
+              }
+              if (remainingHour["minute"] < 10) {
+                remainingHour["minute"] = "0" + remainingHour["minute"];
+              }
+              textFieldElement.style.fontSize = "16px";
+              textFieldElement.classList.add("gredient-color-green");
+              textFieldElement.value =
+                remainingHour["hour"] + ":" + remainingHour["minute"];
+              document.getElementById("h2-title-remainig").style.display =
+                "block";
+            }
+            if (leaveTimeResult["hour"] < 12) {
+              checkHour = leaveTimeResult["hour"] + 12;
+            } else {
+              checkHour = leaveTimeResult["hour"];
+            }
             if (
-              currentHour > leaveTimeResult["hour"] ||
-              (currentHour >= leaveTimeResult["hour"] &&
+              currentHour > checkHour ||
+              (currentHour >= checkHour &&
                 currentMinute >= leaveTimeResult["minute"])
             ) {
               document.getElementById("hurryTag").style.display = "block";
