@@ -6,7 +6,7 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
   let youCanLeave = 0;
   let finalLeaveHours = 0;
   const tabId = tab.id;
-  if (tabUrl === "http://localhost:3000/attendance") {
+  if (tabUrl === "https://hr.codal.com/attendance") {
     document.getElementById("getHours").addEventListener("click", () => {
       document.getElementById("hurryTag").style.display = "none";
       console.log("Popup DOM fully loaded and parsed");
