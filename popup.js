@@ -82,6 +82,9 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         const totalWorkSecond = workHours * 3600 + workMin * 60;
         const totalSecondsRequired = wantToComplete - totalWorkSecond;
         const start = spans[0].innerHTML?.trim();
+        if (spans[1]?.innerHTML?.trim()) {
+          return { status: "MISS_PUNCH", actualWork: actualWork };
+        }
         const startHourSeconds = start.split(" ")[0].split(":")[0] * 3600;
         const startMinSeconds = start.split(" ")[0].split(":")[1] * 60;
         const total = startHourSeconds + startMinSeconds + totalSecondsRequired;
@@ -135,6 +138,15 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
             textFieldElement.style.color = "red";
             dateOfDay.style.display = "block";
             document.getElementById("h2-title").remove();
+          } else if (resultDetails?.status == "MISS_PUNCH") {
+            console.log("Hello");
+            document.getElementById("h2-title").remove();
+            document.getElementById("textField").remove();
+            document.getElementById("miss_punch_div").style.display = "block";
+            document.getElementById("miss_punch").style.display = "block";
+            let textFieldElement = document.getElementById("miss_punch");
+            textFieldElement.value = `${resultDetails?.actualWork}`;
+            textFieldElement.style.color = "red";
           } else {
             let leaveTimeResult = resultDetails["leaveTime"];
             let remainingHour = resultDetails["remainingHour"];
