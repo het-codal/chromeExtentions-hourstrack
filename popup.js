@@ -141,7 +141,10 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
           } else if (resultDetails == "HOURS_COMPLETED") {
             let textFieldElement = document.getElementById("textField");
             textFieldElement.value = "Your hours already completed.";
-            document.getElementById("h2-title").remove();
+            document.getElementById("h2-title-remainig").style.display = "none";
+            document.getElementById("textFieldRemaining").style.display =
+              "none";
+            document.getElementById("h2-title").style.display = "none";
           } else if (resultDetails["status"] == "Empty") {
             dateOfDay.innerHTML = resultDetails["formattedToday"];
             let textFieldElement = document.getElementById("textField");
@@ -180,6 +183,9 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
                 "block";
               document.getElementById("textFieldRemaining").style.display =
                 "block";
+            }
+            if (currentHour > 12) {
+              currentHour = currentHour - 12;
             }
             if (
               currentHour > leaveTimeResult["hour"] ||
