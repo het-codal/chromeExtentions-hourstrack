@@ -96,7 +96,10 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
         const l = startHourSeconds + startMinSeconds;
         const rh = wantToComplete - totalWorkSecond - (k - l);
         // Formula 8(totalHours need to complete)  - total work done - (current time - last in time)
-        const remainingHour = convertHMS(rh);
+        let remainingHour = convertHMS(rh);
+        if (k === total || k > total) {
+          remainingHour = false;
+        }
         youCanLeave = convertHMS(total);
         let trHtml =
           "<thead><tr class='title-tr'><td colspan='2'>" +
@@ -159,11 +162,7 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
             let remainingHour = resultDetails["remainingHour"];
             let currentDate = new Date();
             let currentHour = currentDate.getHours();
-            currentHour > 12 && (currentHour = currentHour - 12);
             let currentMinute = currentDate.getMinutes();
-            let checkHour = leaveTimeResult["hour"]
-              ? leaveTimeResult["hour"]
-              : 0;
             if (remainingHour) {
               let textFieldElement =
                 document.getElementById("textFieldRemaining");
@@ -179,18 +178,20 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
                 remainingHour["hour"] + ":" + remainingHour["minute"];
               document.getElementById("h2-title-remainig").style.display =
                 "block";
-            }
-            if (leaveTimeResult["hour"] < 12) {
-              checkHour = leaveTimeResult["hour"] + 12;
-            } else {
-              checkHour = leaveTimeResult["hour"];
+              document.getElementById("textFieldRemaining").style.display =
+                "block";
             }
             if (
-              currentHour > checkHour ||
-              (currentHour >= checkHour &&
+              currentHour > leaveTimeResult["hour"] ||
+              (currentHour >= leaveTimeResult["hour"] &&
                 currentMinute >= leaveTimeResult["minute"])
             ) {
               document.getElementById("hurryTag").style.display = "block";
+              document.getElementById("miss_punch_div").style.display = "none";
+              document.getElementById("h2-title-remainig").style.display =
+                "none";
+              document.getElementById("textFieldRemaining").style.display =
+                "none";
             }
             if (leaveTimeResult["hour"] >= 12) {
               leaveTimeResult["hour"] = leaveTimeResult["hour"] - 12;
